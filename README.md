@@ -49,17 +49,14 @@ import { LineAgePre, LineAgeMid, LineAgePost } from "quartz-line-age";
 const config: QuartzConfig = {
   plugins: {
     transformers: [
-      // Run LineAgePre early in the transformation pipeline
-      LineAgePre({ enabled: true }),
-
-      // ... other markdown transformers
-      Plugin.Toc(),
+      LineAgePre(),
+      //... ,
+      Plugin.TableOfContents(),
       LineAgeMid(),
       Plugin.FrontMatter(),
       Plugin.GitHubFlavoredMarkdown(),
-      // Run LineAgePost after HTML conversion
+      //... ,
       LineAgePost({
-        enabled: true,
         maxAgeDays: 365,
         freshColor: { r: 34, g: 197, b: 94 },
         oldColor: { r: 156, g: 163, b: 175 },

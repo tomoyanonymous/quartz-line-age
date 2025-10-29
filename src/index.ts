@@ -204,21 +204,32 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   };
 };
 
+/**
+ * LineAgePre - Post-processes markdown, especially table of contents
+ * Removes unused comments in toc slug and texts
+ */
+
 export const LineAgeMid: QuartzTransformerPlugin<
   Partial<LineAgeOptions>
 > = () => {
   const opts = {};
   // Regular expression to match comment markers in attributes
   const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
+  const slugMarkerPattern = /---\s*line\d+\s*---/g;
+
   return {
     name: "LineAgeMid",
     markdownPlugins() {
       return [
         () => {
-          return (tree: any, file: any) =>
-            file.data.toc.forEach((entry: TocEntry) => {
-              entry.text.replace(commentMarkerPattern, "");
+          return (tree: any, file: any) =>{
+            let toc = file.data.toc;
+            if (!toc) return;
+            toc.forEach((entry: TocEntry) => {
+              entry.slug = entry.slug.replace(slugMarkerPattern, "");
+              entry.text = entry.text.replace(commentMarkerPattern, "");
             });
+          }
         },
       ];
     },

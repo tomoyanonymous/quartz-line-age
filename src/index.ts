@@ -274,24 +274,5 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   };
 };
 
-/**
- * Combined plugin for backward compatibility
- * Uses the two-stage approach internally
- */
-export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
-  userOpts?
-) => {
-  const prePlug = LineAgePre(userOpts);
-  const postPlug = LineAgePost(userOpts);
-
-  return {
-    name: "LineAge",
-    textTransform: prePlug.textTransform,
-    htmlPlugins: postPlug.htmlPlugins,
-  };
-};
-
-export default LineAge;
-
 // Export individual plugins and utility functions
 export { calculateColor, getLineAges };

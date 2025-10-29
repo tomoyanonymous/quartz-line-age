@@ -228,12 +228,36 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
             // Get line ages from git blame
             const lineAges = getLineAges(relativePath, repositoryRoot);
-            if (lineAges.size === 0) return;
 
             // Regular expression to match line number in comment: line:N
             const lineMarkerRegex = /^\s*line:(\d+)\s*$/;
 
-            // Visit all comment nodes and replace them with line-age-bar spans
+            // Regular expression to match comment markers in attributes
+            const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
+
+            // First pass: Clean up any HTML comment markers in heading IDs and anchor hrefs
+            // These may have been generated during markdown processing before our plugin ran
+            visit(tree, "element", (node: Element) => {
+              // Clean up heading IDs
+              if (node.tagName && node.tagName.match(/^h[1-6]$/)) {
+                if (node.properties && node.properties.id) {
+                  const id = String(node.properties.id);
+                  if (id.includes("<!--")) {
+                    node.properties.id = id.replace(commentMarkerPattern, "").trim();
+                  }
+                }
+              }
+              
+              // Clean up anchor hrefs
+              if (node.tagName === "a" && node.properties && node.properties.href) {
+                const href = String(node.properties.href);
+                if (href.includes("<!--")) {
+                  node.properties.href = href.replace(commentMarkerPattern, "").trim();
+                }
+              }
+            });
+
+            // Second pass: Replace comment nodes with line-age-bar spans or remove them
             visit(tree, "comment", (node: any, index, parent) => {
               if (!parent || index === undefined) return;
 
@@ -244,29 +268,33 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
               // Get age for this line
               const ageDays = lineAges.get(lineNumber);
-              if (!ageDays) return;
-              const color = calculateColor(
-                ageDays,
-                opts.maxAgeDays,
-                opts.freshColor,
-                opts.oldColor
-              );
+              
+              if (ageDays !== undefined && lineAges.size > 0) {
+                // We have git blame data - create a line-age-bar span
+                const color = calculateColor(
+                  ageDays,
+                  opts.maxAgeDays,
+                  opts.freshColor,
+                  opts.oldColor
+                );
 
-              // Create line-age-bar span to replace the comment
-              const lineAgeBar: Element = {
-                type: "element",
-                tagName: "span",
-                properties: {
-                  className: ["line-age-bar"],
-                  style: `background-color: ${color};`,
-                  "data-line-age": ageDays.toFixed(1),
-                },
-                children: [],
-              };
+                const lineAgeBar: Element = {
+                  type: "element",
+                  tagName: "span",
+                  properties: {
+                    className: ["line-age-bar"],
+                    style: `background-color: ${color};`,
+                    "data-line-age": ageDays.toFixed(1),
+                  },
+                  children: [],
+                };
 
-              // Replace the comment node with the line-age-bar span
-              parent.children.splice(index,1);
-              parent.children.splice(0, 0, lineAgeBar);
+                // Replace the comment node with the line-age-bar span
+                parent.children[index] = lineAgeBar;
+              } else {
+                // No git blame data - just remove the comment marker
+                parent.children.splice(index, 1);
+              }
             });
           };
         },

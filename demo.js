@@ -42,8 +42,8 @@ console.log('\n=== Git Blame Demo ===\n');
 console.log('Analyzing this file (demo.js)...\n');
 
 try {
-  const thisFile = join(__dirname, 'demo.js');
-  const lineAges = getLineAges(thisFile);
+  const thisFile = 'demo.js';
+  const lineAges = getLineAges(thisFile, __dirname);
   
   if (lineAges.size > 0) {
     console.log(`Found ${lineAges.size} lines with git blame data:`);

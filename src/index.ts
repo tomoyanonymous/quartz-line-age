@@ -1,12 +1,6 @@
 import { spawnSync } from "child_process"
-import path from "path"
-
-// Type definitions for Quartz plugin integration
-// These would be imported from Quartz in a real installation
-export interface QuartzTransformerPlugin<T = any> {
-  name: string
-  htmlPlugins?: () => any[]
-}
+import * as path from "path"
+import { QuartzTransformerPlugin, BuildCtx } from "./quartz-types"
 
 export interface RGBColor {
   r: number
@@ -59,10 +53,11 @@ function calculateColor(
 
 /**
  * Get git blame information for a file
- * @param filePath - Path to the file
+ * @param filePath - Path to the file (relative to repository root)
+ * @param repositoryRoot - Root directory of the repository
  * @returns Map of line numbers to age in days
  */
-function getLineAges(filePath: string): Map<number, number> {
+function getLineAges(filePath: string, repositoryRoot: string): Map<number, number> {
   const lineAges = new Map<number, number>()
   
   try {
@@ -70,7 +65,7 @@ function getLineAges(filePath: string): Map<number, number> {
     // Using spawnSync with array args to avoid command injection
     const result = spawnSync("git", ["blame", "--porcelain", "--", filePath], {
       encoding: "utf-8",
-      cwd: path.dirname(filePath),
+      cwd: repositoryRoot,
     })
     
     if (result.error || result.status !== 0) {
@@ -118,7 +113,7 @@ function getLineAges(filePath: string): Map<number, number> {
  * Quartz plugin that adds line age visualization
  * This is a reference implementation. In actual use, it would integrate with Quartz's plugin system.
  */
-export const LineAge = (userOpts?: Partial<LineAgeOptions>): QuartzTransformerPlugin => {
+export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (userOpts?) => {
   const opts = { 
     enabled: true, 
     maxAgeDays: 365,
@@ -129,18 +124,22 @@ export const LineAge = (userOpts?: Partial<LineAgeOptions>): QuartzTransformerPl
 
   return {
     name: "LineAge",
-    htmlPlugins() {
+    htmlPlugins(ctx: BuildCtx) {
       return [
         () => {
           return (tree: any, file: any) => {
             if (!opts.enabled) return
 
-            // Get the file path from the VFile
-            const filePath = file.history?.[0]
-            if (!filePath) return
+            // Get the file path from VFile data
+            const fullFp = file.data?.filePath
+            if (!fullFp) return
+
+            // Calculate relative path from repository root
+            const repositoryRoot = ctx.argv.directory
+            const relativePath = path.relative(repositoryRoot, fullFp)
 
             // Get line ages from git blame
-            const lineAges = getLineAges(filePath)
+            const lineAges = getLineAges(relativePath, repositoryRoot)
             if (lineAges.size === 0) return
 
             // This would integrate with Quartz's AST processing
@@ -148,7 +147,7 @@ export const LineAge = (userOpts?: Partial<LineAgeOptions>): QuartzTransformerPl
             // the HTML AST and inject the line age bars
             
             // See the example.html file for the expected HTML structure
-            console.log("LineAge plugin would process:", filePath)
+            console.log("LineAge plugin would process:", relativePath)
             console.log("Line ages retrieved:", lineAges.size, "lines")
           }
         },

@@ -8,7 +8,7 @@ const __dirname = dirname(__filename);
 
 console.log('Testing line age detection on README.md...\n');
 
-const lineAges = getLineAges(join(__dirname, 'README.md'));
+const lineAges = getLineAges('README.md', __dirname);
 
 if (lineAges.size > 0) {
   console.log(`✓ Successfully retrieved ${lineAges.size} line ages`);

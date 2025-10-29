@@ -13,13 +13,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Demo: Calculate colors for different ages
-console.log('\n=== Color Gradient Demo ===\n');
+console.log('\n=== Color Gradient Demo (Default Colors) ===\n');
 console.log('Age (days) -> Color');
 console.log('-------------------');
 
 const ages = [0, 30, 60, 90, 120, 180, 240, 300, 365, 400];
 ages.forEach(age => {
   const color = calculateColor(age);
+  console.log(`${age.toString().padStart(3)} days   -> ${color}`);
+});
+
+// Demo: Custom colors
+console.log('\n=== Color Gradient Demo (Custom Colors) ===\n');
+console.log('Using blue (fresh) to red (old)');
+console.log('Age (days) -> Color');
+console.log('-------------------');
+
+const customFresh = { r: 59, g: 130, b: 246 };  // blue-500
+const customOld = { r: 239, g: 68, b: 68 };      // red-500
+
+ages.forEach(age => {
+  const color = calculateColor(age, 365, customFresh, customOld);
   console.log(`${age.toString().padStart(3)} days   -> ${color}`);
 });
 

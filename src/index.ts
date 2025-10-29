@@ -8,6 +8,12 @@ export interface QuartzTransformerPlugin<T = any> {
   htmlPlugins?: () => any[]
 }
 
+export interface RGBColor {
+  r: number
+  g: number
+  b: number
+}
+
 export interface LineAgeOptions {
   /**
    * Maximum age in days for the color gradient (default: 365 days = 1 year)
@@ -17,24 +23,32 @@ export interface LineAgeOptions {
    * Show the line age bars (default: true)
    */
   enabled?: boolean
+  /**
+   * Color for fresh/newest lines (default: rgb(34, 197, 94) - green-500)
+   */
+  freshColor?: RGBColor
+  /**
+   * Color for old/stale lines (default: rgb(156, 163, 175) - gray-400)
+   */
+  oldColor?: RGBColor
 }
 
 /**
  * Calculate color based on age in days
  * @param ageDays - Age of the line in days
  * @param maxAgeDays - Maximum age for the gradient (default: 365)
+ * @param freshColor - Color for fresh/newest lines (default: green-500)
+ * @param oldColor - Color for old/stale lines (default: gray-400)
  * @returns CSS color string (rgb)
  */
-function calculateColor(ageDays: number, maxAgeDays: number = 365): string {
+function calculateColor(
+  ageDays: number, 
+  maxAgeDays: number = 365,
+  freshColor: RGBColor = { r: 34, g: 197, b: 94 },
+  oldColor: RGBColor = { r: 156, g: 163, b: 175 }
+): string {
   // Clamp age to max
   const normalizedAge = Math.min(ageDays, maxAgeDays) / maxAgeDays
-  
-  // Green (fresh) to Gray (old)
-  // Fresh: rgb(34, 197, 94) - green-500
-  // Old: rgb(156, 163, 175) - gray-400
-  
-  const freshColor = { r: 34, g: 197, b: 94 }
-  const oldColor = { r: 156, g: 163, b: 175 }
   
   const r = Math.round(freshColor.r + (oldColor.r - freshColor.r) * normalizedAge)
   const g = Math.round(freshColor.g + (oldColor.g - freshColor.g) * normalizedAge)
@@ -105,7 +119,13 @@ function getLineAges(filePath: string): Map<number, number> {
  * This is a reference implementation. In actual use, it would integrate with Quartz's plugin system.
  */
 export const LineAge = (userOpts?: Partial<LineAgeOptions>): QuartzTransformerPlugin => {
-  const opts = { enabled: true, maxAgeDays: 365, ...userOpts }
+  const opts = { 
+    enabled: true, 
+    maxAgeDays: 365,
+    freshColor: { r: 34, g: 197, b: 94 },
+    oldColor: { r: 156, g: 163, b: 175 },
+    ...userOpts 
+  }
 
   return {
     name: "LineAge",

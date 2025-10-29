@@ -43,6 +43,8 @@ const config: QuartzConfig = {
       LineAge({
         enabled: true,      // Enable/disable the plugin
         maxAgeDays: 365,    // Maximum age in days for gradient (default: 365)
+        freshColor: { r: 34, g: 197, b: 94 },   // Color for newest lines (default: green-500)
+        oldColor: { r: 156, g: 163, b: 175 },   // Color for oldest lines (default: gray-400)
       }),
     ],
   },
@@ -55,6 +57,30 @@ export default config
 
 - `enabled` (boolean, default: `true`) - Enable or disable the line age visualization
 - `maxAgeDays` (number, default: `365`) - Maximum age in days for the color gradient. Lines older than this will show as completely gray.
+- `freshColor` (RGBColor, default: `{ r: 34, g: 197, b: 94 }`) - RGB color for the newest/freshest lines (default is green-500)
+- `oldColor` (RGBColor, default: `{ r: 156, g: 163, b: 175 }`) - RGB color for the oldest/stale lines (default is gray-400)
+
+### Color Customization Examples
+
+```typescript
+// Blue to red gradient
+LineAge({
+  freshColor: { r: 59, g: 130, b: 246 },   // blue-500
+  oldColor: { r: 239, g: 68, b: 68 },      // red-500
+})
+
+// Purple to yellow gradient
+LineAge({
+  freshColor: { r: 168, g: 85, b: 247 },   // purple-500
+  oldColor: { r: 234, g: 179, b: 8 },      // yellow-500
+})
+
+// Custom monochrome (dark to light)
+LineAge({
+  freshColor: { r: 17, g: 24, b: 39 },     // slate-900
+  oldColor: { r: 226, g: 232, b: 240 },    // slate-200
+})
+```
 
 ## Styling
 

@@ -39,6 +39,8 @@ export default {
       LineAge({
         enabled: true,      // Enable the plugin
         maxAgeDays: 365,    // Lines older than 1 year will be fully gray
+        freshColor: { r: 34, g: 197, b: 94 },   // Green for fresh lines
+        oldColor: { r: 156, g: 163, b: 175 },   // Gray for old lines
       }),
     ],
     filters: [Plugin.RemoveDrafts()],

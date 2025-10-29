@@ -30,6 +30,12 @@ npm install quartz-line-age
 
 ## Usage
 
+The plugin uses a two-stage approach to add line age visualization:
+1. **LineAgePre** - Runs before markdown processing and inserts metadata markers
+2. **LineAgePost** - Runs after HTML conversion and transforms markers into styled elements
+
+### Simple Usage (Combined Plugin)
+
 Add the plugin to your `quartz.config.ts`:
 
 ```typescript
@@ -39,12 +45,46 @@ import { LineAge } from "quartz-line-age"
 const config: QuartzConfig = {
   plugins: {
     transformers: [
-      // ... other transformers
+      // ... other transformers (before LineAge)
       LineAge({
         enabled: true,      // Enable/disable the plugin
         maxAgeDays: 365,    // Maximum age in days for gradient (default: 365)
         freshColor: { r: 34, g: 197, b: 94 },   // Color for newest lines (default: green-500)
         oldColor: { r: 156, g: 163, b: 175 },   // Color for oldest lines (default: gray-400)
+      }),
+      // ... other transformers (after LineAge)
+    ],
+  },
+}
+
+export default config
+```
+
+### Advanced Usage (Separate Plugins)
+
+For more control over the transformation stages, you can use `LineAgePre` and `LineAgePost` separately:
+
+```typescript
+import { QuartzConfig } from "./quartz/cfg"
+import { LineAgePre, LineAgePost } from "quartz-line-age"
+
+const config: QuartzConfig = {
+  plugins: {
+    transformers: [
+      // Run LineAgePre early in the transformation pipeline
+      LineAgePre({ enabled: true }),
+      
+      // ... other markdown transformers
+      Plugin.FrontMatter(),
+      Plugin.GitHubFlavoredMarkdown(),
+      // ...
+      
+      // Run LineAgePost after HTML conversion
+      LineAgePost({
+        enabled: true,
+        maxAgeDays: 365,
+        freshColor: { r: 34, g: 197, b: 94 },
+        oldColor: { r: 156, g: 163, b: 175 },
       }),
     ],
   },

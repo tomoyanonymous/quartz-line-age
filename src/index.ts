@@ -2,7 +2,8 @@ import { spawnSync } from "child_process";
 import * as path from "path";
 import { BuildCtx, QuartzTransformerPlugin } from "./quartz-types";
 import { visit } from "unist-util-visit";
-import { Element, Root, Text } from "hast";
+import { Element, Root as HtmlRoot, Text } from "hast";
+import { Root as MdastRoot } from "mdast";
 // import { BuildCtx } from "@jackyzha0/quartz/quartz/util/ctx"
 // import { QuartzTransformerPlugin} from "@jackyzha0/quartz/quartz/plugins/types"
 
@@ -33,6 +34,9 @@ export interface LineAgeOptions {
 
 /**
  * Calculate color based on age in days
+ * Inspired by Obsidian Git's line authoring implementation
+ * Uses a power function to make recent changes more pronounced
+ * 
  * @param ageDays - Age of the line in days
  * @param maxAgeDays - Maximum age for the gradient (default: 365)
  * @param freshColor - Color for fresh/newest lines (default: green-500)
@@ -45,17 +49,22 @@ function calculateColor(
   freshColor: RGBColor = { r: 34, g: 197, b: 94 },
   oldColor: RGBColor = { r: 156, g: 163, b: 175 }
 ): string {
-  // Clamp age to max
+  // Clamp age to max: 0 <= x <= 1, where larger x means older
   const normalizedAge = Math.min(ageDays, maxAgeDays) / maxAgeDays;
+  
+  // Use power function (n-th root) to make recent changes more pronounced
+  // This matches the Obsidian Git approach: x^(1/2.3)
+  // This means the color changes more rapidly for recent commits
+  const adjustedAge = Math.pow(normalizedAge, 1 / 2.3);
 
   const r = Math.round(
-    freshColor.r + (oldColor.r - freshColor.r) * normalizedAge
+    freshColor.r + (oldColor.r - freshColor.r) * adjustedAge
   );
   const g = Math.round(
-    freshColor.g + (oldColor.g - freshColor.g) * normalizedAge
+    freshColor.g + (oldColor.g - freshColor.g) * adjustedAge
   );
   const b = Math.round(
-    freshColor.b + (oldColor.b - freshColor.b) * normalizedAge
+    freshColor.b + (oldColor.b - freshColor.b) * adjustedAge
   );
 
   return `rgb(${r}, ${g}, ${b})`;
@@ -123,10 +132,42 @@ function getLineAges(
 }
 
 /**
- * Quartz plugin that adds line age visualization
- * This is a reference implementation. In actual use, it would integrate with Quartz's plugin system.
+ * LineAgePre - Pre-processes markdown before it's converted to HTML
+ * Inserts line age metadata markers at the beginning of each line
+ * Format: {{-line:N-}} where N is the line number
  */
-export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
+export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
+  userOpts?
+) => {
+  const opts = {
+    enabled: true,
+    ...userOpts,
+  };
+
+  return {
+    name: "LineAgePre",
+    textTransform(ctx: BuildCtx, src: string) {
+      if (!opts.enabled) return src;
+
+      // Split source into lines
+      const lines = src.split("\n");
+      
+      // Insert line number markers at the beginning of each line
+      const markedLines = lines.map((line, index) => {
+        const lineNumber = index + 1;
+        return `{{-line:${lineNumber}-}}${line}`;
+      });
+
+      return markedLines.join("\n");
+    },
+  };
+};
+
+/**
+ * LineAgePost - Post-processes HTML after markdown conversion
+ * Finds line markers and wraps content in divs with proper styling
+ */
+export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   userOpts?
 ) => {
   const opts = {
@@ -138,11 +179,11 @@ export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   };
 
   return {
-    name: "LineAge",
+    name: "LineAgePost",
     htmlPlugins(ctx: BuildCtx) {
       return [
         () => {
-          return (tree: Root, file: any) => {
+          return (tree: HtmlRoot, file: any) => {
             if (!opts.enabled) return;
 
             // Get the file path from VFile data
@@ -157,80 +198,76 @@ export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
             const lineAges = getLineAges(relativePath, repositoryRoot);
             if (lineAges.size === 0) return;
 
-            // Process code blocks to add line-age visualization
-            // We traverse the tree and wrap each line in code blocks with line-age styling
-            visit(tree, "element", (node: Element, index, parent) => {
-              // Only process code blocks (pre > code structure)
-              if (node.tagName === "pre" && parent) {
-                // Find the code element inside pre
-                const codeElement = node.children.find(
-                  (child): child is Element =>
-                    child.type === "element" && child.tagName === "code"
+            // Regular expression to match line markers: {{-line:N-}}
+            const lineMarkerRegex = /\{\{-line:(\d+)-\}\}/g;
+
+            // Visit all text nodes and process line markers
+            visit(tree, "text", (node: Text, index, parent) => {
+              if (!parent || index === undefined) return;
+
+              const text = node.value;
+              const matches = Array.from(text.matchAll(lineMarkerRegex));
+
+              if (matches.length === 0) return;
+
+              // Split the text by line markers and create new nodes
+              const newNodes: (Element | Text)[] = [];
+              let lastIndex = 0;
+
+              for (const match of matches) {
+                const lineNumber = parseInt(match[1], 10);
+                const markerStart = match.index!;
+                const markerEnd = markerStart + match[0].length;
+
+                // Get the content after the marker (up to next marker or end)
+                const nextMatch = matches[matches.indexOf(match) + 1];
+                const contentEnd = nextMatch ? nextMatch.index! : text.length;
+                const content = text.substring(markerEnd, contentEnd);
+
+                // Get age for this line
+                const ageDays = lineAges.get(lineNumber) || 0;
+                const color = calculateColor(
+                  ageDays,
+                  opts.maxAgeDays,
+                  opts.freshColor,
+                  opts.oldColor
                 );
 
-                if (!codeElement) return;
-
-                // Process text content within the code element
-                const newChildren: (Element | Text)[] = [];
-                let lineNumber = 1;
-                
-                for (const child of codeElement.children) {
-                  if (child.type === "text") {
-                    // Split text by lines
-                    const lines = child.value.split("\n");
-                    
-                    for (let i = 0; i < lines.length; i++) {
-                      const lineText = lines[i];
-                      
-                      // Get age for current line (default to 0 if not found)
-                      const ageDays = lineAges.get(lineNumber) || 0;
-                      const color = calculateColor(
-                        ageDays,
-                        opts.maxAgeDays,
-                        opts.freshColor,
-                        opts.oldColor
-                      );
-
-                      // Create line wrapper with age bar
-                      const lineWrapper: Element = {
+                // Create a wrapper div with line-age styling
+                if (content.trim()) {
+                  const wrapper: Element = {
+                    type: "element",
+                    tagName: "div",
+                    properties: {
+                      className: ["line-age-container"],
+                      "data-line-age": ageDays.toFixed(1),
+                    },
+                    children: [
+                      {
                         type: "element",
                         tagName: "span",
                         properties: {
-                          className: ["line-age-wrapper"],
+                          className: ["line-age-bar"],
+                          style: `background-color: ${color};`,
                         },
-                        children: [
-                          {
-                            type: "element",
-                            tagName: "span",
-                            properties: {
-                              className: ["line-age-bar"],
-                              style: `background-color: ${color};`,
-                            },
-                            children: [],
-                          },
-                          {
-                            type: "text",
-                            value: lineText,
-                          },
-                        ],
-                      };
+                        children: [],
+                      },
+                      {
+                        type: "text",
+                        value: content,
+                      },
+                    ],
+                  };
 
-                      newChildren.push(lineWrapper);
-                      
-                      // Add newline between lines (except after last line)
-                      if (i < lines.length - 1) {
-                        newChildren.push({ type: "text", value: "\n" });
-                        lineNumber++;
-                      }
-                    }
-                  } else {
-                    // Keep non-text nodes as is (e.g., syntax highlighting spans)
-                    newChildren.push(child as Element);
-                  }
+                  newNodes.push(wrapper);
                 }
 
-                // Replace children of code element
-                codeElement.children = newChildren;
+                lastIndex = contentEnd;
+              }
+
+              // Replace the text node with the new structure
+              if (newNodes.length > 0) {
+                parent.children.splice(index, 1, ...newNodes);
               }
             });
           };
@@ -240,7 +277,24 @@ export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   };
 };
 
+/**
+ * Combined plugin for backward compatibility
+ * Uses the two-stage approach internally
+ */
+export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
+  userOpts?
+) => {
+  const prePlug = LineAgePre(userOpts);
+  const postPlug = LineAgePost(userOpts);
+
+  return {
+    name: "LineAge",
+    textTransform: prePlug.textTransform,
+    htmlPlugins: postPlug.htmlPlugins,
+  };
+};
+
 export default LineAge;
 
-// Export utility functions for standalone use
+// Export individual plugins and utility functions
 export { calculateColor, getLineAges };

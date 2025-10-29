@@ -26,7 +26,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@jackyzha0/quartz": "github:jackyzha0/quartz#v4",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0",
     "unified": "^11.0.5"

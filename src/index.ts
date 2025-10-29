@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process";
 import * as path from "path";
-import { BuildCtx, QuartzTransformerPlugin } from "./quartz-types";
+import { BuildCtx, QuartzTransformerPlugin, TocEntry } from "./quartz-types";
 import { visit } from "unist-util-visit";
 import { Element, Root as HtmlRoot, Text } from "hast";
 import { Root as MdastRoot } from "mdast";
@@ -121,7 +121,11 @@ function getLineAges(
         };
       } else if (line.startsWith("committer-time ") && currentLineInfo) {
         currentLineInfo.commitTime = parseInt(line.split(" ")[1], 10);
-      } else if (line.startsWith("\t") && currentLineInfo.commitTime && currentLineInfo.finalLine) {
+      } else if (
+        line.startsWith("\t") &&
+        currentLineInfo.commitTime &&
+        currentLineInfo.finalLine
+      ) {
         // This is the content line, finalize the info for this line
         const ageSeconds = Date.now() / 1000 - currentLineInfo.commitTime;
         const ageDays = ageSeconds / (60 * 60 * 24);
@@ -200,6 +204,27 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   };
 };
 
+export const LineAgeMid: QuartzTransformerPlugin<
+  Partial<LineAgeOptions>
+> = () => {
+  const opts = {};
+  // Regular expression to match comment markers in attributes
+  const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
+  return {
+    name: "LineAgeMid",
+    markdownPlugins() {
+      return [
+        () => {
+          return (tree: any, file: any) =>
+            file.data.toc.forEach((entry: TocEntry) => {
+              entry.text.replace(commentMarkerPattern, "");
+            });
+        },
+      ];
+    },
+  };
+};
+
 /**
  * LineAgePost - Post-processes HTML after markdown conversion
  * Finds line markers and wraps content in divs with proper styling
@@ -248,16 +273,24 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                 if (node.properties && node.properties.id) {
                   const id = String(node.properties.id);
                   if (id.includes("<!--")) {
-                    node.properties.id = id.replace(commentMarkerPattern, "").trim();
+                    node.properties.id = id
+                      .replace(commentMarkerPattern, "")
+                      .trim();
                   }
                 }
               }
-              
+
               // Clean up anchor hrefs
-              if (node.tagName === "a" && node.properties && node.properties.href) {
+              if (
+                node.tagName === "a" &&
+                node.properties &&
+                node.properties.href
+              ) {
                 const href = String(node.properties.href);
                 if (href.includes("<!--")) {
-                  node.properties.href = href.replace(commentMarkerPattern, "").trim();
+                  node.properties.href = href
+                    .replace(commentMarkerPattern, "")
+                    .trim();
                 }
               }
             });
@@ -273,7 +306,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
               // Get age for this line
               const ageDays = lineAges.get(lineNumber);
-              
+
               if (ageDays !== undefined && lineAges.size > 0) {
                 // We have git blame data - create a line-age-bar span
                 const color = calculateColor(

@@ -32,3 +32,8 @@ export interface QuartzTransformerPluginInstance {
   htmlPlugins?: (ctx: BuildCtx) => PluggableList
   externalResources?: (ctx: BuildCtx) => any
 }
+export interface TocEntry {
+  depth: number
+  text: string
+  slug: string // this is just the anchor (#some-slug), not the canonical slug
+}

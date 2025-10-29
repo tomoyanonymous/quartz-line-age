@@ -38,13 +38,13 @@ The plugin uses a two-stage approach to add line age visualization:
 
 ### Usage
 
-You need to add `LineAgePre` and `LineAgePost` plugins separately.
+You need to add `LineAgePre`, `LineAgeMid` and `LineAgePost` plugins separately.
 
-`LineAgePre` should be added as a first plugin and `LineAgePost` should be added right after markdown processor.
+`LineAgePre` should be added as a first plugin, `LineAgeMid` should be placed right after `Plugin.Toc()`, `LineAgePost` should be added right after markdown processor.
 
 ```typescript
 import { QuartzConfig } from "./quartz/cfg";
-import { LineAgePre, LineAgePost } from "quartz-line-age";
+import { LineAgePre, LineAgeMid, LineAgePost } from "quartz-line-age";
 
 const config: QuartzConfig = {
   plugins: {
@@ -53,6 +53,8 @@ const config: QuartzConfig = {
       LineAgePre({ enabled: true }),
 
       // ... other markdown transformers
+      Plugin.Toc(),
+      LineAgeMid(),
       Plugin.FrontMatter(),
       Plugin.GitHubFlavoredMarkdown(),
       // Run LineAgePost after HTML conversion

@@ -1,9 +1,14 @@
 // Test the line age functionality with actual git data
 import { getLineAges, calculateColor } from './dist/index.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 console.log('Testing line age detection on README.md...\n');
 
-const lineAges = getLineAges('/home/runner/work/quartz-line-age/quartz-line-age/README.md');
+const lineAges = getLineAges(join(__dirname, 'README.md'));
 
 if (lineAges.size > 0) {
   console.log(`✓ Successfully retrieved ${lineAges.size} line ages`);

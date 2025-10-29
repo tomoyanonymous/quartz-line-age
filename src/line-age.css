@@ -1,29 +1,25 @@
 /* Line Age Visualization Styles */
 
-.line-age-wrapper {
-  display: block;
+/* Apply position relative to article container */
+article {
   position: relative;
-  padding-left: 8px;
+  padding-left: 10px;
 }
 
+/* The colored bar positioned absolutely */
 .line-age-bar {
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
   width: 4px;
-  height: 100%;
+  height: 1.5em;
   border-radius: 2px;
-  transition: background-color 0.3s ease;
-}
-
-/* For code blocks */
-pre code .line-age-wrapper {
-  line-height: inherit;
+  transition: all 0.3s ease;
+  pointer-events: none;
 }
 
 /* Hover effect to show age visually */
-.line-age-wrapper:hover .line-age-bar {
+.line-age-bar:hover {
   width: 6px;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  pointer-events: auto;
 }

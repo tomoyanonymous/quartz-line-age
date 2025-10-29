@@ -1,28 +1,14 @@
-# Quartz Line Age
+# Quartz Line Age Plugin
 
-A Quartz plugin that displays line authoring age visualization, similar to the Obsidian Git plugin's [Line Authoring](https://publish.obsidian.md/git-doc/Line+Authoring) feature.
-
-## Features
-
-- 🎨 Visual line age indicators with color gradients
-- 🟢 Green bars for recently updated lines
-- ⚪ Gradually fades to gray over 1 year
-- 🔍 Uses git blame to determine line ages
-- ⚡ Lightweight and performant
+A [Quartz](https://quartz.jzhao.xyz/) plugin that displays line authoring age visualization, inspired from the [Telomere feature in Cosense(Scrapbox)](https://scrapbox.io/shokai/%E3%83%86%E3%83%AD%E3%83%A1%E3%82%A2) and Obsidian Git plugin's [Line Authoring](https://publish.obsidian.md/git-doc/Line+Authoring) feature.
 
 ## Preview
 
-![Line Age Visualization Demo](https://github.com/user-attachments/assets/efdeae97-0c97-47da-a47b-a9ed261ec553)
-
-Each line in your code or content will have a small colored bar on the left side:
-- **Green** (rgb(34, 197, 94)) - Just updated (fresh)
-- **Gray** (rgb(156, 163, 175)) - Over 1 year old (stale)
-
-The color smoothly transitions between these two states based on the age of the line.
+See **<https://garden.matsuuratomoya.com>** .
 
 ## Installation
 
-For Quartz v4:
+In your quartz directory,
 
 ```bash
 npm install quartz-line-age
@@ -30,27 +16,44 @@ npm install quartz-line-age
 
 ## Usage
 
-Add the plugin to your `quartz.config.ts`:
+The plugin is separated into 3 stages
+
+1. **LineAgePre** - Runs before markdown processing and inserts metadata markers
+1. **LineAgeMid** - Runs after toc is generated, and removed unnecessary html comments from them.
+1. **LineAgePost** - Runs after HTML conversion and transforms markers into styled elements
+
+### Usage
+
+You need to add `LineAgePre`, `LineAgeMid` and `LineAgePost` plugins separately.
+
+`LineAgePre` should be added as a first plugin, `LineAgeMid` should be placed right after `Plugin.Toc()`, `LineAgePost` should be added right after markdown processor.
 
 ```typescript
-import { QuartzConfig } from "./quartz/cfg"
-import { LineAge } from "quartz-line-age"
+import { QuartzConfig } from "./quartz/cfg";
+import { LineAgePre, LineAgeMid, LineAgePost } from "quartz-line-age";
 
 const config: QuartzConfig = {
   plugins: {
     transformers: [
-      // ... other transformers
-      LineAge({
-        enabled: true,      // Enable/disable the plugin
-        maxAgeDays: 365,    // Maximum age in days for gradient (default: 365)
-        freshColor: { r: 34, g: 197, b: 94 },   // Color for newest lines (default: green-500)
-        oldColor: { r: 156, g: 163, b: 175 },   // Color for oldest lines (default: gray-400)
+      LineAgePre(),
+      //... ,
+      Plugin.TableOfContents(),
+      LineAgeMid(),
+      Plugin.FrontMatter(),
+      Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
+      Plugin.GitHubFlavoredMarkdown(),
+      //... ,
+      LineAgePost({
+        maxAgeDays: 365,
+        freshColor: { r: 34, g: 197, b: 94 },
+        oldColor: { r: 156, g: 163, b: 175 },
       }),
+      // ...
     ],
   },
-}
+};
 
-export default config
+export default config;
 ```
 
 ### Options
@@ -60,37 +63,15 @@ export default config
 - `freshColor` (RGBColor, default: `{ r: 34, g: 197, b: 94 }`) - RGB color for the newest/freshest lines (default is green-500)
 - `oldColor` (RGBColor, default: `{ r: 156, g: 163, b: 175 }`) - RGB color for the oldest/stale lines (default is gray-400)
 
-### Color Customization Examples
-
-```typescript
-// Blue to red gradient
-LineAge({
-  freshColor: { r: 59, g: 130, b: 246 },   // blue-500
-  oldColor: { r: 239, g: 68, b: 68 },      // red-500
-})
-
-// Purple to yellow gradient
-LineAge({
-  freshColor: { r: 168, g: 85, b: 247 },   // purple-500
-  oldColor: { r: 234, g: 179, b: 8 },      // yellow-500
-})
-
-// Custom monochrome (dark to light)
-LineAge({
-  freshColor: { r: 17, g: 24, b: 39 },     // slate-900
-  oldColor: { r: 226, g: 232, b: 240 },    // slate-200
-})
-```
 
 ## Styling
 
-Include the CSS in your Quartz theme or add it to your custom CSS:
+Include the CSS in your Quartz theme or add it to custom SCSS:
 
-```css
-@import "quartz-line-age/dist/line-age.css";
+```scss
+@use "quartz-line-age/src/line-age.css";
 ```
 
-Or import the CSS file directly in your Quartz configuration.
 
 ### Customization
 
@@ -98,12 +79,12 @@ You can customize the appearance by overriding the CSS classes:
 
 ```css
 .line-age-bar {
-  width: 6px;           /* Adjust bar width */
-  border-radius: 3px;   /* Adjust corner radius */
+  width: 6px; /* Adjust bar width */
+  border-radius: 3px; /* Adjust corner radius */
 }
 
 .line-age-wrapper:hover .line-age-bar {
-  width: 8px;           /* Adjust hover width */
+  width: 8px; /* Adjust hover width */
 }
 ```
 
@@ -115,7 +96,8 @@ You can customize the appearance by overriding the CSS classes:
 4. A small colored bar is added to the left of each line
 
 The color calculation formula:
-```
+
+```js
 age_ratio = min(age_in_days / max_age_days, 1.0)
 color = interpolate(green, gray, age_ratio)
 ```
@@ -127,6 +109,7 @@ color = interpolate(green, gray, age_ratio)
 See [example.html](./example.html) for a standalone demonstration of the line age visualization.
 
 You can open it directly in your browser:
+
 ```bash
 # Serve the example locally
 python3 -m http.server 8080
@@ -136,11 +119,13 @@ python3 -m http.server 8080
 ### Command Line Demo
 
 Run the included demo script to see the color calculations:
+
 ```bash
 node demo.js
 ```
 
 This will show:
+
 - Color gradient for different ages (0-365+ days)
 - Git blame analysis of the demo file itself
 - Color values for each line
@@ -148,6 +133,7 @@ This will show:
 ### Integration Test
 
 Test the git blame integration on real files:
+
 ```bash
 node test-integration.js
 ```
@@ -179,10 +165,3 @@ node test-path-handling.js
 node demo.js
 ```
 
-## License
-
-MIT
-
-## Credits
-
-Inspired by the [Obsidian Git plugin's Line Authoring feature](https://publish.obsidian.md/git-doc/Line+Authoring).

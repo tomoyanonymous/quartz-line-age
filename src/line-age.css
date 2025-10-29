@@ -25,19 +25,3 @@
   width: 6px;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 }
-
-/* Legacy styles for backward compatibility */
-.line-age-wrapper {
-  display: block;
-  position: relative;
-  padding-left: 8px;
-}
-
-pre code .line-age-wrapper {
-  line-height: inherit;
-}
-
-.line-age-wrapper:hover .line-age-bar {
-  width: 6px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
-}

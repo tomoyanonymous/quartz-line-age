@@ -133,8 +133,9 @@ function getLineAges(
 
 /**
  * LineAgePre - Pre-processes markdown before it's converted to HTML
- * Inserts line age metadata markers at the beginning of each line
+ * Inserts line age metadata markers at the end of each line
  * Format: {{-line:N-}} where N is the line number
+ * Skips frontmatter blocks (content between --- delimiters at the start)
  */
 export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
   userOpts?
@@ -152,10 +153,34 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
       // Split source into lines
       const lines = src.split("\n");
       
-      // Insert line number markers at the beginning of each line
+      // Detect frontmatter
+      let inFrontmatter = false;
+      let frontmatterEnded = false;
+      let frontmatterLineCount = 0;
+      
+      // Check if document starts with frontmatter
+      if (lines[0] && lines[0].trim() === "---") {
+        inFrontmatter = true;
+      }
+      
+      // Insert line number markers at the end of each line
       const markedLines = lines.map((line, index) => {
         const lineNumber = index + 1;
-        return `{{-line:${lineNumber}-}}${line}`;
+        
+        // Handle frontmatter detection
+        if (inFrontmatter) {
+          frontmatterLineCount++;
+          // Check for closing --- (must be after the opening ---)
+          if (frontmatterLineCount > 1 && line.trim() === "---") {
+            inFrontmatter = false;
+            frontmatterEnded = true;
+          }
+          // Don't add markers to frontmatter lines
+          return line;
+        }
+        
+        // Add marker at the end of the line
+        return `${line}{{-line:${lineNumber}-}}`;
       });
 
       return markedLines.join("\n");

@@ -23,7 +23,7 @@
     "git",
     "line-authoring"
   ],
-  "author": "",
+  "author": "Tomoya Matsuura",
   "license": "MIT",
   "devDependencies": {
     "@types/hast": "^3.0.4",

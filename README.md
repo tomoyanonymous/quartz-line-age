@@ -1,25 +1,10 @@
-# Quartz Line Age
+# Quartz Line Age Plugin
 
-A Quartz plugin that displays line authoring age visualization, similar to the Obsidian Git plugin's [Line Authoring](https://publish.obsidian.md/git-doc/Line+Authoring) feature.
-
-## Features
-
-- 🎨 Visual line age indicators with color gradients
-- 🟢 Green bars for recently updated lines
-- ⚪ Gradually fades to gray over 1 year
-- 🔍 Uses git blame to determine line ages
-- ⚡ Lightweight and performant
+A [Quartz](https://quartz.jzhao.xyz/) plugin that displays line authoring age visualization, inspired from the [Telomere feature in Cosense(Scrapbox)](https://scrapbox.io/shokai/%E3%83%86%E3%83%AD%E3%83%A1%E3%82%A2) and Obsidian Git plugin's [Line Authoring](https://publish.obsidian.md/git-doc/Line+Authoring) feature.
 
 ## Preview
 
-![Line Age Visualization Demo](https://github.com/user-attachments/assets/efdeae97-0c97-47da-a47b-a9ed261ec553)
-
-Each line in your code or content will have a small colored bar on the left side:
-
-- **Green** (rgb(34, 197, 94)) - Just updated (fresh)
-- **Gray** (rgb(156, 163, 175)) - Over 1 year old (stale)
-
-The color smoothly transitions between these two states based on the age of the line.
+See **<https://garden.matsuuratomoya.com>** .
 
 ## Installation
 
@@ -31,10 +16,11 @@ npm install quartz-line-age
 
 ## Usage
 
-The plugin uses a two-stage approach to add line age visualization:
+The plugin is separated into 3 stages
 
 1. **LineAgePre** - Runs before markdown processing and inserts metadata markers
-2. **LineAgePost** - Runs after HTML conversion and transforms markers into styled elements
+1. **LineAgeMid** - Runs after toc is generated, and removed unnecessary html comments from them.
+1. **LineAgePost** - Runs after HTML conversion and transforms markers into styled elements
 
 ### Usage
 
@@ -54,6 +40,7 @@ const config: QuartzConfig = {
       Plugin.TableOfContents(),
       LineAgeMid(),
       Plugin.FrontMatter(),
+      Plugin.ObsidianFlavoredMarkdown({ enableInHtmlEmbed: false }),
       Plugin.GitHubFlavoredMarkdown(),
       //... ,
       LineAgePost({
@@ -110,7 +97,7 @@ You can customize the appearance by overriding the CSS classes:
 
 The color calculation formula:
 
-```
+```js
 age_ratio = min(age_in_days / max_age_days, 1.0)
 color = interpolate(green, gray, age_ratio)
 ```
@@ -178,10 +165,3 @@ node test-path-handling.js
 node demo.js
 ```
 
-## License
-
-MIT
-
-## Credits
-
-Inspired by the [Obsidian Git plugin's Line Authoring feature](https://publish.obsidian.md/git-doc/Line+Authoring).

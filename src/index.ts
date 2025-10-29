@@ -243,7 +243,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               const lineNumber = parseInt(match[1], 10);
 
               // Get age for this line
-              const ageDays = lineAges.get(lineNumber) || null;
+              const ageDays = lineAges.get(lineNumber);
               if (!ageDays) return;
               const color = calculateColor(
                 ageDays,

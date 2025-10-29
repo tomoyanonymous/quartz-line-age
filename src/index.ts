@@ -244,10 +244,9 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                 const markerStart = match.index!;
                 const markerEnd = markerStart + match[0].length;
 
-                // Get the content after the marker (up to next marker or end)
-                const nextMatch = matches[matches.indexOf(match) + 1];
-                const contentEnd = nextMatch ? nextMatch.index! : text.length;
-                const content = text.substring(markerEnd, contentEnd);
+                // Get the content BEFORE the marker (from last position to marker start)
+                // This is the content for this line, since markers are now at line END
+                const content = text.substring(lastIndex, markerStart);
 
                 // Get age for this line
                 const ageDays = lineAges.get(lineNumber) || 0;
@@ -287,7 +286,19 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                   newNodes.push(wrapper);
                 }
 
-                lastIndex = contentEnd;
+                // Move past the marker to the next content
+                lastIndex = markerEnd;
+              }
+
+              // Add any remaining text after the last marker
+              if (lastIndex < text.length) {
+                const remainingText = text.substring(lastIndex);
+                if (remainingText.trim()) {
+                  newNodes.push({
+                    type: "text",
+                    value: remainingText,
+                  });
+                }
               }
 
               // Replace the text node with the new structure

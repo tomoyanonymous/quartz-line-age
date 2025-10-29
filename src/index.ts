@@ -1,6 +1,8 @@
 import { spawnSync } from "child_process";
 import * as path from "path";
 import { BuildCtx, QuartzTransformerPlugin } from "./quartz-types";
+import { visit } from "unist-util-visit";
+import { Element, Root, Text } from "hast";
 // import { BuildCtx } from "@jackyzha0/quartz/quartz/util/ctx"
 // import { QuartzTransformerPlugin} from "@jackyzha0/quartz/quartz/plugins/types"
 
@@ -140,7 +142,7 @@ export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
     htmlPlugins(ctx: BuildCtx) {
       return [
         () => {
-          return (tree: any, file: any) => {
+          return (tree: Root, file: any) => {
             if (!opts.enabled) return;
 
             // Get the file path from VFile data
@@ -155,13 +157,82 @@ export const LineAge: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
             const lineAges = getLineAges(relativePath, repositoryRoot);
             if (lineAges.size === 0) return;
 
-            // This would integrate with Quartz's AST processing
-            // The actual implementation would use unist-util-visit to traverse
-            // the HTML AST and inject the line age bars
+            // Process code blocks to add line-age visualization
+            // We traverse the tree and wrap each line in code blocks with line-age styling
+            visit(tree, "element", (node: Element, index, parent) => {
+              // Only process code blocks (pre > code structure)
+              if (node.tagName === "pre" && parent) {
+                // Find the code element inside pre
+                const codeElement = node.children.find(
+                  (child): child is Element =>
+                    child.type === "element" && child.tagName === "code"
+                );
 
-            // See the example.html file for the expected HTML structure
-            console.log("LineAge plugin would process:", relativePath);
-            console.log("Line ages retrieved:", lineAges.size, "lines");
+                if (!codeElement) return;
+
+                // Process text content within the code element
+                const newChildren: (Element | Text)[] = [];
+                let lineNumber = 1;
+                
+                for (const child of codeElement.children) {
+                  if (child.type === "text") {
+                    // Split text by lines
+                    const lines = child.value.split("\n");
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                      const lineText = lines[i];
+                      
+                      // Get age for current line (default to 0 if not found)
+                      const ageDays = lineAges.get(lineNumber) || 0;
+                      const color = calculateColor(
+                        ageDays,
+                        opts.maxAgeDays,
+                        opts.freshColor,
+                        opts.oldColor
+                      );
+
+                      // Create line wrapper with age bar
+                      const lineWrapper: Element = {
+                        type: "element",
+                        tagName: "span",
+                        properties: {
+                          className: ["line-age-wrapper"],
+                        },
+                        children: [
+                          {
+                            type: "element",
+                            tagName: "span",
+                            properties: {
+                              className: ["line-age-bar"],
+                              style: `background-color: ${color};`,
+                            },
+                            children: [],
+                          },
+                          {
+                            type: "text",
+                            value: lineText,
+                          },
+                        ],
+                      };
+
+                      newChildren.push(lineWrapper);
+                      
+                      // Add newline between lines (except after last line)
+                      if (i < lines.length - 1) {
+                        newChildren.push({ type: "text", value: "\n" });
+                        lineNumber++;
+                      }
+                    }
+                  } else {
+                    // Keep non-text nodes as is (e.g., syntax highlighting spans)
+                    newChildren.push(child as Element);
+                  }
+                }
+
+                // Replace children of code element
+                codeElement.children = newChildren;
+              }
+            });
           };
         },
       ];

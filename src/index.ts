@@ -179,6 +179,12 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
           return line;
         }
         
+        // Don't add markers to code fence lines (```language or just ```)
+        // This prevents markers from interfering with code block language identifiers
+        if (line.trimStart().startsWith("```")) {
+          return line;
+        }
+        
         // Add marker at the end of the line
         return `${line}{{-line:${lineNumber}-}}`;
       });
@@ -235,7 +241,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
               if (matches.length === 0) return;
 
-              // Split the text by line markers and create new nodes
+              // Process markers: insert line-age-bar elements and remove markers
               const newNodes: (Element | Text)[] = [];
               let lastIndex = 0;
 
@@ -245,8 +251,15 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                 const markerEnd = markerStart + match[0].length;
 
                 // Get the content BEFORE the marker (from last position to marker start)
-                // This is the content for this line, since markers are now at line END
                 const content = text.substring(lastIndex, markerStart);
+
+                // Add content as text node (if non-empty)
+                if (content) {
+                  newNodes.push({
+                    type: "text",
+                    value: content,
+                  });
+                }
 
                 // Get age for this line
                 const ageDays = lineAges.get(lineNumber) || 0;
@@ -257,34 +270,19 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                   opts.oldColor
                 );
 
-                // Create a wrapper div with line-age styling
-                if (content.trim()) {
-                  const wrapper: Element = {
-                    type: "element",
-                    tagName: "div",
-                    properties: {
-                      className: ["line-age-container"],
-                      "data-line-age": ageDays.toFixed(1),
-                    },
-                    children: [
-                      {
-                        type: "element",
-                        tagName: "span",
-                        properties: {
-                          className: ["line-age-bar"],
-                          style: `background-color: ${color};`,
-                        },
-                        children: [],
-                      },
-                      {
-                        type: "text",
-                        value: content,
-                      },
-                    ],
-                  };
+                // Insert line-age-bar span directly (no wrapper div)
+                const lineAgeBar: Element = {
+                  type: "element",
+                  tagName: "span",
+                  properties: {
+                    className: ["line-age-bar"],
+                    style: `background-color: ${color};`,
+                    "data-line-age": ageDays.toFixed(1),
+                  },
+                  children: [],
+                };
 
-                  newNodes.push(wrapper);
-                }
+                newNodes.push(lineAgeBar);
 
                 // Move past the marker to the next content
                 lastIndex = markerEnd;
@@ -293,7 +291,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               // Add any remaining text after the last marker
               if (lastIndex < text.length) {
                 const remainingText = text.substring(lastIndex);
-                if (remainingText.trim()) {
+                if (remainingText) {
                   newNodes.push({
                     type: "text",
                     value: remainingText,

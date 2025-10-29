@@ -87,10 +87,8 @@ async function testTwoStageApproach() {
     console.log('\n' + '='.repeat(50) + '\n');
 
     // Check if the output contains line-age elements
-    if (outputHtml.includes('line-age-container') && 
-        outputHtml.includes('line-age-bar')) {
-      console.log('✓ LineAgePost created line-age containers successfully');
-      console.log('✓ Line-age bars are present');
+    if (outputHtml.includes('line-age-bar')) {
+      console.log('✓ LineAgePost created line-age bars successfully');
       
       // Check if markers are removed
       if (!outputHtml.includes('{{-line:')) {
@@ -102,6 +100,11 @@ async function testTwoStageApproach() {
       // Check if colors are applied
       if (outputHtml.includes('background-color: rgb(')) {
         console.log('✓ Color styling applied');
+      }
+      
+      // Check that line-age-container is NOT present (removed)
+      if (!outputHtml.includes('line-age-container')) {
+        console.log('✓ No line-age-container wrapper (as expected)');
       }
       
       return true;

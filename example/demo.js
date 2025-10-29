@@ -123,16 +123,18 @@ async function processMarkdown() {
   console.log(html.substring(0, 1000) + '...\n');
   
   // Check for line-age elements
-  const hasContainers = html.includes('line-age-container');
   const hasBars = html.includes('line-age-bar');
   const hasColors = html.includes('background-color: rgb(');
+  const hasNoContainers = !html.includes('line-age-container');
+  const hasNoMarkers = !html.includes('{{-line:');
   
   console.log('✓ Verification:');
-  console.log(`  ${hasContainers ? '✓' : '✗'} line-age-container elements created`);
   console.log(`  ${hasBars ? '✓' : '✗'} line-age-bar elements present`);
   console.log(`  ${hasColors ? '✓' : '✗'} Color styling applied`);
+  console.log(`  ${hasNoContainers ? '✓' : '✗'} No line-age-container wrapper (as expected)`);
+  console.log(`  ${hasNoMarkers ? '✓' : '✗'} All markers removed`);
   
-  if (hasContainers && hasBars && hasColors) {
+  if (hasBars && hasColors && hasNoContainers && hasNoMarkers) {
     console.log('\n🎉 Transformation successful!');
   }
   

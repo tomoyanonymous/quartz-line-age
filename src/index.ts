@@ -36,7 +36,7 @@ export interface LineAgeOptions {
  * Calculate color based on age in days
  * Inspired by Obsidian Git's line authoring implementation
  * Uses a power function to make recent changes more pronounced
- * 
+ *
  * @param ageDays - Age of the line in days
  * @param maxAgeDays - Maximum age for the gradient (default: 365)
  * @param freshColor - Color for fresh/newest lines (default: green-500)
@@ -51,7 +51,7 @@ function calculateColor(
 ): string {
   // Clamp age to max: 0 <= x <= 1, where larger x means older
   const normalizedAge = Math.min(ageDays, maxAgeDays) / maxAgeDays;
-  
+
   // Use power function (n-th root) to make recent changes more pronounced
   // This matches the Obsidian Git approach: x^(1/2.3)
   // This means the color changes more rapidly for recent commits
@@ -152,21 +152,21 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
       // Split source into lines
       const lines = src.split("\n");
-      
+
       // Detect frontmatter
       let inFrontmatter = false;
       let frontmatterEnded = false;
       let frontmatterLineCount = 0;
-      
+
       // Check if document starts with frontmatter
       if (lines[0] && lines[0].trim() === "---") {
         inFrontmatter = true;
       }
-      
+
       // Insert line number markers at the end of each line
       const markedLines = lines.map((line, index) => {
         const lineNumber = index + 1;
-        
+
         // Handle frontmatter detection
         if (inFrontmatter) {
           frontmatterLineCount++;
@@ -178,13 +178,13 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
           // Don't add markers to frontmatter lines
           return line;
         }
-        
+
         // Don't add markers to code fence lines (```language or just ```)
         // This prevents markers from interfering with code block language identifiers
         if (line.trimStart().startsWith("```")) {
           return line;
         }
-        
+
         // Add marker as HTML comment at the end of the line
         // HTML comments are preserved through markdown processing but not rendered
         return `${line}<!-- line:${lineNumber} -->`;
@@ -265,7 +265,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               };
 
               // Replace the comment node with the line-age-bar span
-              parent.children.unshift(lineAgeBar);
+              parent.children.splice(0, 0, lineAgeBar);
             });
           };
         },

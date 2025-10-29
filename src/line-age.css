@@ -3,6 +3,7 @@
 /* Apply position relative to article container */
 article {
   position: relative;
+  padding-left: 10px;
 }
 
 /* The colored bar positioned absolutely */

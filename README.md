@@ -173,8 +173,10 @@ npm install
 # Build the plugin
 npm run build
 
-# Test (when tests are added)
-npm test
+# Run tests
+node test-integration.js
+node test-path-handling.js
+node demo.js
 ```
 
 ## License

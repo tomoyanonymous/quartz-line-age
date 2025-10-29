@@ -12,6 +12,8 @@ A Quartz plugin that displays line authoring age visualization, similar to the O
 
 ## Preview
 
+![Line Age Visualization Demo](https://github.com/user-attachments/assets/efdeae97-0c97-47da-a47b-a9ed261ec553)
+
 Each line in your code or content will have a small colored bar on the left side:
 - **Green** (rgb(34, 197, 94)) - Just updated (fresh)
 - **Gray** (rgb(156, 163, 175)) - Over 1 year old (stale)
@@ -92,11 +94,34 @@ age_ratio = min(age_in_days / max_age_days, 1.0)
 color = interpolate(green, gray, age_ratio)
 ```
 
-## Example
+## Examples
+
+### Standalone Demo
 
 See [example.html](./example.html) for a standalone demonstration of the line age visualization.
 
-Open it in your browser to see how the colored bars look in action.
+You can open it directly in your browser:
+```bash
+# Serve the example locally
+python3 -m http.server 8080
+# Then open http://localhost:8080/example.html
+```
+
+### Command Line Demo
+
+Run the included demo script to see the color calculations:
+```bash
+node demo.js
+```
+
+This will show:
+- Color gradient for different ages (0-365+ days)
+- Git blame analysis of the demo file itself
+- Color values for each line
+
+### Integration Example
+
+See [example-usage.js](./example-usage.js) for a complete example of how to integrate this plugin with your Quartz configuration.
 
 ## Requirements
 

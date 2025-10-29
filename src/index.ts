@@ -1,4 +1,4 @@
-import { execSync } from "child_process"
+import { spawnSync } from "child_process"
 import path from "path"
 
 // Type definitions for Quartz plugin integration
@@ -53,12 +53,18 @@ function getLineAges(filePath: string): Map<number, number> {
   
   try {
     // Run git blame with porcelain format for easier parsing
-    const blame = execSync(`git blame --porcelain "${filePath}"`, {
+    // Using spawnSync with array args to avoid command injection
+    const result = spawnSync("git", ["blame", "--porcelain", "--", filePath], {
       encoding: "utf-8",
       cwd: path.dirname(filePath),
     })
     
-    const lines = blame.split("\n")
+    if (result.error || result.status !== 0) {
+      console.warn(`Failed to get git blame for ${filePath}:`, result.stderr)
+      return lineAges
+    }
+    
+    const lines = result.stdout.split("\n")
     let currentLine = 1
     let commitTime = 0
     
@@ -67,7 +73,13 @@ function getLineAges(filePath: string): Map<number, number> {
       
       // Commit time line
       if (line.startsWith("committer-time ")) {
-        commitTime = parseInt(line.split(" ")[1])
+        const parts = line.split(" ")
+        if (parts.length >= 2) {
+          const parsed = parseInt(parts[1], 10)
+          if (!isNaN(parsed)) {
+            commitTime = parsed
+          }
+        }
       }
       
       // Tab character indicates the actual content line
@@ -76,9 +88,9 @@ function getLineAges(filePath: string): Map<number, number> {
           const ageSeconds = Date.now() / 1000 - commitTime
           const ageDays = ageSeconds / (60 * 60 * 24)
           lineAges.set(currentLine, ageDays)
-          currentLine++
-          commitTime = 0
         }
+        currentLine++
+        commitTime = 0
       }
     }
   } catch (error) {

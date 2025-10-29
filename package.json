@@ -1,0 +1,31 @@
+{
+  "name": "quartz-line-age",
+  "version": "1.0.0",
+  "description": "A Quartz plugin that displays line authoring age visualization similar to Obsidian Git plugin's Line Authoring feature",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/line-age.css": "./src/line-age.css"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "quartz",
+    "plugin",
+    "git",
+    "line-authoring"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

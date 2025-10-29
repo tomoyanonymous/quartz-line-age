@@ -1,0 +1,29 @@
+/* Line Age Visualization Styles */
+
+.line-age-wrapper {
+  display: block;
+  position: relative;
+  padding-left: 8px;
+}
+
+.line-age-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  transition: background-color 0.3s ease;
+}
+
+/* For code blocks */
+pre code .line-age-wrapper {
+  line-height: inherit;
+}
+
+/* Hover effect to show age visually */
+.line-age-wrapper:hover .line-age-bar {
+  width: 6px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}

@@ -265,7 +265,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               };
 
               // Replace the comment node with the line-age-bar span
-              parent.children[index] = lineAgeBar;
+              parent.children.unshift(lineAgeBar);
             });
           };
         },

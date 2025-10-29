@@ -83,45 +83,50 @@ function getLineAges(
   const lineAges = new Map<number, number>();
 
   try {
-    // Run git blame with porcelain format for easier parsing
-    // Using spawnSync with array args to avoid command injection
-    const result = spawnSync("git", ["blame", "--porcelain", "--", filePath], {
-      encoding: "utf-8",
-      cwd: repositoryRoot,
-    });
+    // Use --line-porcelain for detailed, machine-readable output per line
+    const result = spawnSync(
+      "git",
+      ["blame", "--line-porcelain", "--", filePath],
+      {
+        encoding: "utf-8",
+        cwd: repositoryRoot,
+      }
+    );
 
     if (result.error || result.status !== 0) {
       console.warn(`Failed to get git blame for ${filePath}:`, result.stderr);
       return lineAges;
     }
 
-    const lines = result.stdout.split("\n");
-    let currentLine = 1;
-    let commitTime = 0;
+    const blameOutput = result.stdout;
+    const blameLines = blameOutput.split("\n");
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
+    let currentLineInfo: { commitTime?: number; finalLine?: number } = {};
+    const lineInfoRegex = /^([a-f0-9]{40})\s\d+\s(\d+)/;
 
-      // Commit time line
-      if (line.startsWith("committer-time ")) {
-        const parts = line.split(" ");
-        if (parts.length >= 2) {
-          const parsed = parseInt(parts[1], 10);
-          if (!isNaN(parsed)) {
-            commitTime = parsed;
-          }
-        }
-      }
+    for (let i = 0; i < blameLines.length; i++) {
+      const line = blameLines[i];
+      const match = line.match(lineInfoRegex);
 
-      // Tab character indicates the actual content line
-      if (line.startsWith("\t")) {
-        if (commitTime > 0) {
-          const ageSeconds = Date.now() / 1000 - commitTime;
+      if (match) {
+        // Start of a new line's blame info
+        if (currentLineInfo.commitTime && currentLineInfo.finalLine) {
+          const ageSeconds = Date.now() / 1000 - currentLineInfo.commitTime;
           const ageDays = ageSeconds / (60 * 60 * 24);
-          lineAges.set(currentLine, ageDays);
+          lineAges.set(currentLineInfo.finalLine, ageDays);
         }
-        currentLine++;
-        commitTime = 0;
+
+        currentLineInfo = {
+          finalLine: parseInt(match[2], 10),
+        };
+      } else if (line.startsWith("committer-time ") && currentLineInfo) {
+        currentLineInfo.commitTime = parseInt(line.split(" ")[1], 10);
+      } else if (line.startsWith("\t") && currentLineInfo.commitTime && currentLineInfo.finalLine) {
+        // This is the content line, finalize the info for this line
+        const ageSeconds = Date.now() / 1000 - currentLineInfo.commitTime;
+        const ageDays = ageSeconds / (60 * 60 * 24);
+        lineAges.set(currentLineInfo.finalLine, ageDays);
+        currentLineInfo = {}; // Reset for the next block
       }
     }
   } catch (error) {

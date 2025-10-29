@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Line Age Two-Stage Approach Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f9fafb;
+      color: #333;
+    }
+    
+    h1 {
+      color: #1f2937;
+      border-bottom: 3px solid #22c55e;
+      padding-bottom: 10px;
+    }
+    
+    h2 {
+      color: #374151;
+      margin-top: 40px;
+    }
+    
+    .demo-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    pre {
+      background: #f3f4f6;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    
+    code {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+    
+    /* Line Age Styles */
+    .line-age-container {
+      display: block;
+      position: relative;
+      padding-left: 12px;
+      margin: 4px 0;
+      line-height: 1.6;
+    }
+    
+    .line-age-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      height: 100%;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+    
+    .line-age-container:hover .line-age-bar {
+      width: 6px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 6px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .legend-bar {
+      width: 4px;
+      height: 20px;
+      border-radius: 2px;
+    }
+    
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    
+    .success-box {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Quartz Line Age - Two-Stage Approach Demo</h1>
+  
+  <div class="info-box">
+    <strong>Implementation:</strong> The plugin now uses a two-stage approach:
+    <ol>
+      <li><strong>LineAgePre</strong> - Inserts <code>{{-line:N-}}</code> markers before markdown processing</li>
+      <li><strong>LineAgePost</strong> - Transforms markers into styled HTML elements after conversion</li>
+    </ol>
+  </div>
+
+  <div class="demo-section">
+    <h2>📝 Stage 1: LineAgePre Output</h2>
+    <p>Markdown with line markers inserted:</p>
+    <pre><code>{{-line:1-}}# Hello World
+{{-line:2-}}
+{{-line:3-}}This is a test document.
+{{-line:4-}}It has multiple lines.
+{{-line:5-}}
+{{-line:6-}}## Code Example</code></pre>
+  </div>
+
+  <div class="demo-section">
+    <h2>🎨 Stage 2: LineAgePost Output</h2>
+    <p>Rendered HTML with line age visualization:</p>
+    
+    <div class="line-age-container" data-line-age="5.2">
+      <span class="line-age-bar" style="background-color: rgb(64, 191, 109);"></span>
+      <strong>Hello World</strong>
+    </div>
+    
+    <div class="line-age-container" data-line-age="12.8">
+      <span class="line-age-bar" style="background-color: rgb(85, 187, 119);"></span>
+      This is a test document.
+    </div>
+    
+    <div class="line-age-container" data-line-age="45.3">
+      <span class="line-age-bar" style="background-color: rgb(106, 182, 130);"></span>
+      It has multiple lines.
+    </div>
+    
+    <div class="line-age-container" data-line-age="120.5">
+      <span class="line-age-bar" style="background-color: rgb(128, 177, 143);"></span>
+      <strong>Code Example</strong>
+    </div>
+    
+    <div class="line-age-container" data-line-age="365.0">
+      <span class="line-age-bar" style="background-color: rgb(156, 163, 175);"></span>
+      Some older content here.
+    </div>
+    
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-bar" style="background-color: rgb(34, 197, 94);"></span>
+        <span>Fresh (0-30 days)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-bar" style="background-color: rgb(100, 180, 128);"></span>
+        <span>Recent (30-120 days)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-bar" style="background-color: rgb(140, 170, 158);"></span>
+        <span>Aging (120-270 days)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-bar" style="background-color: rgb(156, 163, 175);"></span>
+        <span>Old (365+ days)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-box">
+    <strong>✓ Implementation Complete:</strong>
+    <ul>
+      <li>Two-stage transformation pipeline</li>
+      <li>Git blame integration for line age detection</li>
+      <li>Power function color gradient (x^(1/2.3)) for pronounced recent changes</li>
+      <li>Hover effects for visual feedback</li>
+      <li>Customizable colors and age thresholds</li>
+    </ul>
+  </div>
+
+  <div class="demo-section">
+    <h2>📦 Usage</h2>
+    <pre><code>// In quartz.config.ts
+import { LineAge } from "quartz-line-age"
+
+export default {
+  plugins: {
+    transformers: [
+      LineAge({
+        enabled: true,
+        maxAgeDays: 365,
+        freshColor: { r: 34, g: 197, b: 94 },
+        oldColor: { r: 156, g: 163, b: 175 },
+      }),
+    ],
+  },
+}</code></pre>
+  </div>
+
+  <script>
+    // Add interactive hover preview
+    document.querySelectorAll('.line-age-container').forEach(el => {
+      el.addEventListener('mouseenter', (e) => {
+        const age = e.target.getAttribute('data-line-age');
+        if (age) {
+          e.target.title = `Line age: ${age} days`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

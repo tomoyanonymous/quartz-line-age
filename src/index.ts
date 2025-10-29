@@ -185,8 +185,9 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
           return line;
         }
         
-        // Add marker at the end of the line
-        return `${line}{{-line:${lineNumber}-}}`;
+        // Add marker as HTML comment at the end of the line
+        // HTML comments are preserved through markdown processing but not rendered
+        return `${line}<!-- line:${lineNumber} -->`;
       });
 
       return markedLines.join("\n");
@@ -229,80 +230,41 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
             const lineAges = getLineAges(relativePath, repositoryRoot);
             if (lineAges.size === 0) return;
 
-            // Regular expression to match line markers: {{-line:N-}}
-            const lineMarkerRegex = /\{\{-line:(\d+)-\}\}/g;
+            // Regular expression to match line number in comment: line:N
+            const lineMarkerRegex = /^\s*line:(\d+)\s*$/;
 
-            // Visit all text nodes and process line markers
-            visit(tree, "text", (node: Text, index, parent) => {
+            // Visit all comment nodes and replace them with line-age-bar spans
+            visit(tree, "comment", (node: any, index, parent) => {
               if (!parent || index === undefined) return;
 
-              const text = node.value;
-              const matches = Array.from(text.matchAll(lineMarkerRegex));
+              const match = node.value.match(lineMarkerRegex);
+              if (!match) return;
 
-              if (matches.length === 0) return;
+              const lineNumber = parseInt(match[1], 10);
 
-              // Process markers: insert line-age-bar elements and remove markers
-              const newNodes: (Element | Text)[] = [];
-              let lastIndex = 0;
+              // Get age for this line
+              const ageDays = lineAges.get(lineNumber) || 0;
+              const color = calculateColor(
+                ageDays,
+                opts.maxAgeDays,
+                opts.freshColor,
+                opts.oldColor
+              );
 
-              for (const match of matches) {
-                const lineNumber = parseInt(match[1], 10);
-                const markerStart = match.index!;
-                const markerEnd = markerStart + match[0].length;
+              // Create line-age-bar span to replace the comment
+              const lineAgeBar: Element = {
+                type: "element",
+                tagName: "span",
+                properties: {
+                  className: ["line-age-bar"],
+                  style: `background-color: ${color};`,
+                  "data-line-age": ageDays.toFixed(1),
+                },
+                children: [],
+              };
 
-                // Get the content BEFORE the marker (from last position to marker start)
-                const content = text.substring(lastIndex, markerStart);
-
-                // Add content as text node (if non-empty)
-                if (content) {
-                  newNodes.push({
-                    type: "text",
-                    value: content,
-                  });
-                }
-
-                // Get age for this line
-                const ageDays = lineAges.get(lineNumber) || 0;
-                const color = calculateColor(
-                  ageDays,
-                  opts.maxAgeDays,
-                  opts.freshColor,
-                  opts.oldColor
-                );
-
-                // Insert line-age-bar span directly (no wrapper div)
-                const lineAgeBar: Element = {
-                  type: "element",
-                  tagName: "span",
-                  properties: {
-                    className: ["line-age-bar"],
-                    style: `background-color: ${color};`,
-                    "data-line-age": ageDays.toFixed(1),
-                  },
-                  children: [],
-                };
-
-                newNodes.push(lineAgeBar);
-
-                // Move past the marker to the next content
-                lastIndex = markerEnd;
-              }
-
-              // Add any remaining text after the last marker
-              if (lastIndex < text.length) {
-                const remainingText = text.substring(lastIndex);
-                if (remainingText) {
-                  newNodes.push({
-                    type: "text",
-                    value: remainingText,
-                  });
-                }
-              }
-
-              // Replace the text node with the new structure
-              if (newNodes.length > 0) {
-                parent.children.splice(index, 1, ...newNodes);
-              }
+              // Replace the comment node with the line-age-bar span
+              parent.children[index] = lineAgeBar;
             });
           };
         },

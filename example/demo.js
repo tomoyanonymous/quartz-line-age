@@ -9,6 +9,7 @@ import { LineAgePre, LineAgePost, getLineAges, calculateColor } from '../dist/in
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkRehype from 'remark-rehype';
+import rehypeRaw from 'rehype-raw';
 import rehypeStringify from 'rehype-stringify';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -108,6 +109,7 @@ async function processMarkdown() {
   const processor = unified()
     .use(remarkParse)
     .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)  // Parse raw HTML including comments
     .use(htmlPlugins[0])
     .use(rehypeStringify, { allowDangerousHtml: true });
 
@@ -126,7 +128,7 @@ async function processMarkdown() {
   const hasBars = html.includes('line-age-bar');
   const hasColors = html.includes('background-color: rgb(');
   const hasNoContainers = !html.includes('line-age-container');
-  const hasNoMarkers = !html.includes('{{-line:');
+  const hasNoMarkers = !html.includes('<!-- line:');
   
   console.log('✓ Verification:');
   console.log(`  ${hasBars ? '✓' : '✗'} line-age-bar elements present`);

@@ -3,6 +3,7 @@ import { LineAgePre, LineAgePost } from './dist/index.js';
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeStringify from 'rehype-stringify';
+import rehypeRaw from 'rehype-raw';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import remarkParse from 'remark-parse';
@@ -54,8 +55,8 @@ async function testTwoStageApproach() {
     console.log(transformedMarkdown);
     console.log('\n' + '='.repeat(50) + '\n');
 
-    // Check if markers were inserted
-    if (!transformedMarkdown.includes('{{-line:')) {
+    // Check if HTML comment markers were inserted
+    if (!transformedMarkdown.includes('<!-- line:')) {
       console.log('✗ LineAgePre failed to insert markers');
       return false;
     }
@@ -72,6 +73,7 @@ async function testTwoStageApproach() {
     const processor = unified()
       .use(remarkParse)
       .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeRaw)  // Parse raw HTML including comments
       .use(htmlPlugins[0])
       .use(rehypeStringify, { allowDangerousHtml: true });
 
@@ -90,8 +92,8 @@ async function testTwoStageApproach() {
     if (outputHtml.includes('line-age-bar')) {
       console.log('✓ LineAgePost created line-age bars successfully');
       
-      // Check if markers are removed
-      if (!outputHtml.includes('{{-line:')) {
+      // Check if HTML comment markers are removed
+      if (!outputHtml.includes('<!-- line:')) {
         console.log('✓ Line markers were removed/processed');
       } else {
         console.log('⚠ Line markers still present in output');

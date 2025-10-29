@@ -119,6 +119,15 @@ This will show:
 - Git blame analysis of the demo file itself
 - Color values for each line
 
+### Integration Test
+
+Test the git blame integration on real files:
+```bash
+node test-integration.js
+```
+
+This demonstrates the actual git integration working on committed files.
+
 ### Integration Example
 
 See [example-usage.js](./example-usage.js) for a complete example of how to integrate this plugin with your Quartz configuration.

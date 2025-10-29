@@ -206,7 +206,7 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
 /**
  * LineAgePre - Post-processes markdown, especially table of contents
- * Removes unused comments in toc slug and texts
+ *  npmRemoves unused comments in toc slug and texts
  */
 
 export const LineAgeMid: QuartzTransformerPlugin<
@@ -215,7 +215,7 @@ export const LineAgeMid: QuartzTransformerPlugin<
   const opts = {};
   // Regular expression to match comment markers in attributes
   const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
-  const slugMarkerPattern = /---\s*line\d+\s*---/g;
+  const slugMarkerPattern = /---\s*line:\d+\s*---/g;
 
   return {
     name: "LineAgeMid",

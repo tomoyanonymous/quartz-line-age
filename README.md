@@ -69,7 +69,7 @@ export default config;
 Include the CSS in your Quartz theme or add it to custom SCSS:
 
 ```scss
-@use "quartz-line-age/src/line-age.css";
+@use "quartz-line-age/dist/line-age.css";
 ```
 
 

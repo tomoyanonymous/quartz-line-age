@@ -23,13 +23,21 @@ export interface LineAgeOptions {
    */
   enabled?: boolean;
   /**
-   * Color for fresh/newest lines (default: rgb(34, 197, 94) - green-500)
+   * Color for fresh/newest lines in light mode (default: rgb(34, 197, 94) - green-500)
    */
   freshColor?: RGBColor;
   /**
-   * Color for old/stale lines (default: rgb(156, 163, 175) - gray-400)
+   * Color for old/stale lines in light mode (default: rgb(156, 163, 175) - gray-400)
    */
   oldColor?: RGBColor;
+  /**
+   * Color for fresh/newest lines in dark mode (default: rgb(34, 197, 94) - green-500)
+   */
+  darkModeFreshColor?: RGBColor;
+  /**
+   * Color for old/stale lines in dark mode (default: rgb(100, 116, 139) - slate-500)
+   */
+  darkModeOldColor?: RGBColor;
 }
 
 /**
@@ -248,6 +256,8 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
     maxAgeDays: 365,
     freshColor: { r: 34, g: 197, b: 94 },
     oldColor: { r: 156, g: 163, b: 175 },
+    darkModeFreshColor: { r: 34, g: 197, b: 94 },
+    darkModeOldColor: { r: 100, g: 116, b: 139 },
     ...userOpts,
   };
 
@@ -320,11 +330,18 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 
               if (ageDays !== undefined && lineAges.size > 0) {
                 // We have git blame data - create a line-age-bar span
-                const color = calculateColor(
+                const lightColor = calculateColor(
                   ageDays,
                   opts.maxAgeDays,
                   opts.freshColor,
                   opts.oldColor
+                );
+
+                const darkColor = calculateColor(
+                  ageDays,
+                  opts.maxAgeDays,
+                  opts.darkModeFreshColor,
+                  opts.darkModeOldColor
                 );
 
                 const lineAgeBar: Element = {
@@ -332,7 +349,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                   tagName: "span",
                   properties: {
                     className: ["line-age-bar"],
-                    style: `background-color: ${color};`,
+                    style: `--line-age-color-light: ${lightColor}; --line-age-color-dark: ${darkColor};`,
                     "data-line-age": ageDays.toFixed(1),
                   },
                   children: [],

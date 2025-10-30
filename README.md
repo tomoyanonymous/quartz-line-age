@@ -47,6 +47,8 @@ const config: QuartzConfig = {
         maxAgeDays: 365,
         freshColor: { r: 34, g: 197, b: 94 },
         oldColor: { r: 156, g: 163, b: 175 },
+        darkModeFreshColor: { r: 34, g: 197, b: 94 },
+        darkModeOldColor: { r: 100, g: 116, b: 139 },
       }),
       // ...
     ],
@@ -60,9 +62,29 @@ export default config;
 
 - `enabled` (boolean, default: `true`) - Enable or disable the line age visualization
 - `maxAgeDays` (number, default: `365`) - Maximum age in days for the color gradient. Lines older than this will show as completely gray.
-- `freshColor` (RGBColor, default: `{ r: 34, g: 197, b: 94 }`) - RGB color for the newest/freshest lines (default is green-500)
-- `oldColor` (RGBColor, default: `{ r: 156, g: 163, b: 175 }`) - RGB color for the oldest/stale lines (default is gray-400)
+- `freshColor` (RGBColor, default: `{ r: 34, g: 197, b: 94 }`) - RGB color for the newest/freshest lines in light mode (default is green-500)
+- `oldColor` (RGBColor, default: `{ r: 156, g: 163, b: 175 }`) - RGB color for the oldest/stale lines in light mode (default is gray-400)
+- `darkModeFreshColor` (RGBColor, default: `{ r: 34, g: 197, b: 94 }`) - RGB color for the newest/freshest lines in dark mode (default is green-500)
+- `darkModeOldColor` (RGBColor, default: `{ r: 100, g: 116, b: 139 }`) - RGB color for the oldest/stale lines in dark mode (default is slate-500)
 
+
+## Dark Mode Support
+
+The plugin automatically supports dark mode using the `prefers-color-scheme` CSS media query. You can configure separate colors for light and dark modes:
+
+```typescript
+LineAgePost({
+  maxAgeDays: 365,
+  // Light mode colors
+  freshColor: { r: 34, g: 197, b: 94 },    // green-500
+  oldColor: { r: 156, g: 163, b: 175 },    // gray-400
+  // Dark mode colors
+  darkModeFreshColor: { r: 34, g: 197, b: 94 },   // green-500
+  darkModeOldColor: { r: 100, g: 116, b: 139 },   // slate-500 (darker than light mode)
+})
+```
+
+The plugin will automatically switch colors based on your system's color scheme preference.
 
 ## Styling
 
@@ -92,15 +114,19 @@ You can customize the appearance by overriding the CSS classes:
 
 1. The plugin uses `git blame` to determine when each line was last modified
 2. It calculates the age of each line in days
-3. Based on the age, it computes a color between green (fresh) and gray (old)
-4. A small colored bar is added to the left of each line
+3. Based on the age, it computes a color between green (fresh) and gray (old) for both light and dark modes
+4. A small colored bar is added to the left of each line with CSS variables for theme-aware coloring
 
 The color calculation formula:
 
 ```js
 age_ratio = min(age_in_days / max_age_days, 1.0)
-color = interpolate(green, gray, age_ratio)
+// Uses power function for more pronounced recent changes
+adjusted_ratio = age_ratio^(1/2.3)
+color = interpolate(fresh_color, old_color, adjusted_ratio)
 ```
+
+Colors are calculated separately for light and dark modes and applied using CSS custom properties with `prefers-color-scheme` media queries.
 
 ## Examples
 

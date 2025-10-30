@@ -5,3 +5,7 @@ dist/
 
 # Example site git directory (has its own git history for testing)
 example/.git/
+
+# Test files
+test-dark-mode.html
+test-dark-mode.js

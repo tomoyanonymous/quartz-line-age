@@ -328,7 +328,7 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               // Get age for this line
               const ageDays = lineAges.get(lineNumber);
 
-              if (ageDays !== undefined && lineAges.size > 0) {
+              if (ageDays !== undefined && lineAges.size > 0 && ageDays < opts.maxAgeDays) {
                 // We have git blame data - create a line-age-bar span
                 const lightColor = calculateColor(
                   ageDays,

@@ -15,6 +15,15 @@ article {
   border-radius: 2px;
   transition: all 0.3s ease;
   pointer-events: none;
+  /* Use light mode color by default */
+  background-color: var(--line-age-color-light);
+}
+
+/* Dark mode support using prefers-color-scheme */
+@media (prefers-color-scheme: dark) {
+  .line-age-bar {
+    background-color: var(--line-age-color-dark);
+  }
 }
 
 /* Hover effect to show age visually */
@@ -22,4 +31,11 @@ article {
   width: 6px;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
   pointer-events: auto;
+}
+
+/* Dark mode hover effect with lighter shadow */
+@media (prefers-color-scheme: dark) {
+  .line-age-bar:hover {
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+  }
 }

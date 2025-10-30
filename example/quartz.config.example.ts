@@ -76,8 +76,10 @@ const config: QuartzConfig = {
       LineAge({
         enabled: true,
         maxAgeDays: 365,
-        freshColor: { r: 34, g: 197, b: 94 },   // green-500
-        oldColor: { r: 156, g: 163, b: 175 },   // gray-400
+        freshColor: { r: 34, g: 197, b: 94 },         // green-500 (light mode)
+        oldColor: { r: 156, g: 163, b: 175 },         // gray-400 (light mode)
+        darkModeFreshColor: { r: 34, g: 197, b: 94 }, // green-500 (dark mode)
+        darkModeOldColor: { r: 100, g: 116, b: 139 }, // slate-500 (dark mode)
       }),
       
       // Alternative: Use separate plugins for more control
@@ -88,6 +90,8 @@ const config: QuartzConfig = {
       //   maxAgeDays: 365,
       //   freshColor: { r: 34, g: 197, b: 94 },
       //   oldColor: { r: 156, g: 163, b: 175 },
+      //   darkModeFreshColor: { r: 34, g: 197, b: 94 },
+      //   darkModeOldColor: { r: 100, g: 116, b: 139 },
       // }),
     ],
     filters: [Plugin.RemoveDrafts()],

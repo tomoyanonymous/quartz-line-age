@@ -20,10 +20,8 @@ article {
 }
 
 /* Dark mode support using prefers-color-scheme */
-@media (prefers-color-scheme: dark) {
-  .line-age-bar {
-    background-color: var(--line-age-color-dark);
-  }
+:root[saved-theme="dark"] .line-age-bar {
+  background-color: var(--line-age-color-dark);
 }
 
 /* Hover effect to show age visually */
@@ -34,8 +32,6 @@ article {
 }
 
 /* Dark mode hover effect with lighter shadow */
-@media (prefers-color-scheme: dark) {
-  .line-age-bar:hover {
-    box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-  }
+:root[saved-theme="dark"] .line-age-bar:hover {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
 }

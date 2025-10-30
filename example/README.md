@@ -55,6 +55,8 @@ To use this example with a real Quartz installation:
            maxAgeDays: 365,
            freshColor: { r: 34, g: 197, b: 94 },
            oldColor: { r: 156, g: 163, b: 175 },
+           darkModeFreshColor: { r: 34, g: 197, b: 94 },
+           darkModeOldColor: { r: 100, g: 116, b: 139 },
          }),
        ],
        // ... rest of config
@@ -103,8 +105,12 @@ The `content/` directory contains sample markdown files that demonstrate:
 
 - `enabled` (boolean): Enable/disable the plugin
 - `maxAgeDays` (number): Maximum age in days for the gradient (default: 365)
-- `freshColor` (RGBColor): RGB color for newest lines (default: green-500)
-- `oldColor` (RGBColor): RGB color for oldest lines (default: gray-400)
+- `freshColor` (RGBColor): RGB color for newest lines in light mode (default: green-500)
+- `oldColor` (RGBColor): RGB color for oldest lines in light mode (default: gray-400)
+- `darkModeFreshColor` (RGBColor): RGB color for newest lines in dark mode (default: green-500)
+- `darkModeOldColor` (RGBColor): RGB color for oldest lines in dark mode (default: slate-500)
+
+The plugin automatically switches between light and dark mode colors based on your system's color scheme preference using CSS media queries.
 
 ## Advanced Usage
 
@@ -128,6 +134,8 @@ transformers: [
     maxAgeDays: 365,
     freshColor: { r: 34, g: 197, b: 94 },
     oldColor: { r: 156, g: 163, b: 175 },
+    darkModeFreshColor: { r: 34, g: 197, b: 94 },
+    darkModeOldColor: { r: 100, g: 116, b: 139 },
   }),
 ]
 ```

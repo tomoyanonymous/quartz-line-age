@@ -227,8 +227,8 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 };
 
 /**
- * LineAgePre - Post-processes markdown, especially table of contents
- * Removes unused comments in toc slug and texts
+ * LineAgeMid - Post-processes markdown, especially table of contents
+ * Removes unused comments in toc slug and texts, and cleans up code blocks
  */
 
 export const LineAgeMid: QuartzTransformerPlugin<
@@ -244,14 +244,23 @@ export const LineAgeMid: QuartzTransformerPlugin<
     markdownPlugins() {
       return [
         () => {
-          return (tree: any, file: any) =>{
+          return (tree: MdastRoot, file: any) => {
+            // Clean up TOC entries
             let toc = file.data.toc;
-            if (!toc) return;
-            toc.forEach((entry: TocEntry) => {
-              entry.slug = entry.slug.replace(slugMarkerPattern, "");
-              entry.text = entry.text.replace(commentMarkerPattern, "");
+            if (toc) {
+              toc.forEach((entry: TocEntry) => {
+                entry.slug = entry.slug.replace(slugMarkerPattern, "");
+                entry.text = entry.text.replace(commentMarkerPattern, "");
+              });
+            }
+
+            // Clean up code blocks - remove line markers from code node values
+            visit(tree, "code", (node: any) => {
+              if (node.value && node.value.includes("<!-- line:")) {
+                node.value = node.value.replace(commentMarkerPattern, "");
+              }
             });
-          }
+          };
         },
       ];
     },

@@ -237,6 +237,8 @@ export const LineAgeMid: QuartzTransformerPlugin<
   const opts = {};
   // Regular expression to match comment markers in attributes
   const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
+  // Regular expression to match comment markers at end of lines only
+  const commentMarkerEOLPattern = /<!--\s*line:\d+\s*-->$/gm;
   const slugMarkerPattern = /---\s*line\d+\s*---/g;
 
   return {
@@ -255,9 +257,10 @@ export const LineAgeMid: QuartzTransformerPlugin<
             }
 
             // Clean up code blocks - remove line markers from code node values
+            // Only remove markers at end of lines since that's where they're added
             visit(tree, "code", (node: Code) => {
               if (node.value) {
-                node.value = node.value.replace(commentMarkerPattern, "");
+                node.value = node.value.replace(commentMarkerEOLPattern, "");
               }
             });
           };

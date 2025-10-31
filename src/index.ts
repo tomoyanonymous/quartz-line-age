@@ -318,12 +318,11 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
               // Clean up code blocks - remove escaped HTML comment markers from text nodes
               if (node.tagName === "code") {
                 visit(node, "text", (textNode: Text) => {
-                  if (textNode.value && textNode.value.includes("<!--")) {
-                    // Remove escaped HTML comments (&#x3C;!-- and similar)
+                  if (textNode.value && textNode.value.includes("line:")) {
+                    // Remove escaped and unescaped HTML comment markers
+                    // Matches: &#x3C;!-- line:N -->, &lt;!-- line:N -->, <!-- line:N -->
                     textNode.value = textNode.value
-                      .replace(/&#x3C;!--\s*line:\d+\s*-->/g, "")
-                      .replace(/&lt;!--\s*line:\d+\s*-->/g, "")
-                      .replace(commentMarkerPattern, "");
+                      .replace(/(?:&#x3C;!--|&lt;!--|<!--)\s*line:\d+\s*-->/g, "");
                   }
                 });
               }

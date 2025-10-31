@@ -314,6 +314,19 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                     .trim();
                 }
               }
+
+              // Clean up code blocks - remove escaped HTML comment markers from text nodes
+              if (node.tagName === "code") {
+                visit(node, "text", (textNode: Text) => {
+                  if (textNode.value && textNode.value.includes("<!--")) {
+                    // Remove escaped HTML comments (&#x3C;!-- and similar)
+                    textNode.value = textNode.value
+                      .replace(/&#x3C;!--\s*line:\d+\s*-->/g, "")
+                      .replace(/&lt;!--\s*line:\d+\s*-->/g, "")
+                      .replace(commentMarkerPattern, "");
+                  }
+                });
+              }
             });
 
             // Second pass: Replace comment nodes with line-age-bar spans or remove them

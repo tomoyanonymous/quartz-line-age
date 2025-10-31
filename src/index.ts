@@ -202,6 +202,20 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
           return line;
         }
 
+        // Don't add markers to horizontal rule lines (---, ***, ___)
+        // Horizontal rules must be on their own line to be recognized by Markdown
+        const trimmedLine = line.trim();
+        if (
+          /^-{3,}$/.test(trimmedLine) ||
+          /^\*{3,}$/.test(trimmedLine) ||
+          /^_{3,}$/.test(trimmedLine) ||
+          /^(-\s*){3,}$/.test(trimmedLine) ||
+          /^(\*\s*){3,}$/.test(trimmedLine) ||
+          /^(_\s*){3,}$/.test(trimmedLine)
+        ) {
+          return line;
+        }
+
         // Add marker as HTML comment at the end of the line
         // HTML comments are preserved through markdown processing but not rendered
         return `${line}<!-- line:${lineNumber} -->`;
@@ -313,6 +327,18 @@ export const LineAgePost: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
                     .replace(commentMarkerPattern, "")
                     .trim();
                 }
+              }
+
+              // Clean up code blocks - remove escaped HTML comment markers from text nodes
+              if (node.tagName === "code") {
+                visit(node, "text", (textNode: Text) => {
+                  if (textNode.value && textNode.value.includes("line:")) {
+                    // Remove escaped and unescaped HTML comment markers
+                    // Matches: &#x3C;!-- line:N -->, &lt;!-- line:N -->, <!-- line:N -->
+                    textNode.value = textNode.value
+                      .replace(/(?:&#x3C;!--|&lt;!--|<!--)\s*line:\d+\s*-->/g, "");
+                  }
+                });
               }
             });
 

@@ -3,7 +3,7 @@ import * as path from "path";
 import { BuildCtx, QuartzTransformerPlugin, TocEntry } from "./quartz-types";
 import { visit } from "unist-util-visit";
 import { Element, Root as HtmlRoot, Text } from "hast";
-import { Root as MdastRoot } from "mdast";
+import { Root as MdastRoot, Code } from "mdast";
 // import { BuildCtx } from "@jackyzha0/quartz/quartz/util/ctx"
 // import { QuartzTransformerPlugin} from "@jackyzha0/quartz/quartz/plugins/types"
 
@@ -255,8 +255,8 @@ export const LineAgeMid: QuartzTransformerPlugin<
             }
 
             // Clean up code blocks - remove line markers from code node values
-            visit(tree, "code", (node: any) => {
-              if (node.value && node.value.includes("<!-- line:")) {
+            visit(tree, "code", (node: Code) => {
+              if (node.value) {
                 node.value = node.value.replace(commentMarkerPattern, "");
               }
             });

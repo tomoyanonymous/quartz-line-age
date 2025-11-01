@@ -3,7 +3,7 @@ import * as path from "path";
 import { BuildCtx, QuartzTransformerPlugin, TocEntry } from "./quartz-types";
 import { visit } from "unist-util-visit";
 import { Element, Root as HtmlRoot, Text } from "hast";
-import { Root as MdastRoot } from "mdast";
+import { Root as MdastRoot, Code } from "mdast";
 // import { BuildCtx } from "@jackyzha0/quartz/quartz/util/ctx"
 // import { QuartzTransformerPlugin} from "@jackyzha0/quartz/quartz/plugins/types"
 
@@ -227,8 +227,8 @@ export const LineAgePre: QuartzTransformerPlugin<Partial<LineAgeOptions>> = (
 };
 
 /**
- * LineAgePre - Post-processes markdown, especially table of contents
- * Removes unused comments in toc slug and texts
+ * LineAgeMid - Post-processes markdown, especially table of contents
+ * Removes unused comments in toc slug and texts, and cleans up code blocks
  */
 
 export const LineAgeMid: QuartzTransformerPlugin<
@@ -237,6 +237,8 @@ export const LineAgeMid: QuartzTransformerPlugin<
   const opts = {};
   // Regular expression to match comment markers in attributes
   const commentMarkerPattern = /<!--\s*line:\d+\s*-->/g;
+  // Regular expression to match comment markers at end of lines only
+  const commentMarkerEOLPattern = /<!--\s*line:\d+\s*-->$/gm;
   const slugMarkerPattern = /---\s*line\d+\s*---/g;
 
   return {
@@ -244,14 +246,24 @@ export const LineAgeMid: QuartzTransformerPlugin<
     markdownPlugins() {
       return [
         () => {
-          return (tree: any, file: any) =>{
+          return (tree: MdastRoot, file: any) => {
+            // Clean up TOC entries
             let toc = file.data.toc;
-            if (!toc) return;
-            toc.forEach((entry: TocEntry) => {
-              entry.slug = entry.slug.replace(slugMarkerPattern, "");
-              entry.text = entry.text.replace(commentMarkerPattern, "");
+            if (toc) {
+              toc.forEach((entry: TocEntry) => {
+                entry.slug = entry.slug.replace(slugMarkerPattern, "");
+                entry.text = entry.text.replace(commentMarkerPattern, "");
+              });
+            }
+
+            // Clean up code blocks - remove line markers from code node values
+            // Only remove markers at end of lines since that's where they're added
+            visit(tree, "code", (node: Code) => {
+              if (node.value) {
+                node.value = node.value.replace(commentMarkerEOLPattern, "");
+              }
             });
-          }
+          };
         },
       ];
     },

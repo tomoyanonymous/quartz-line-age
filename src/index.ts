@@ -2,7 +2,7 @@ import { spawnSync } from "child_process";
 import * as path from "path";
 import { BuildCtx, QuartzTransformerPlugin, TocEntry } from "./quartz-types";
 import { visit } from "unist-util-visit";
-import { Element, Root as HtmlRoot, Text } from "hast";
+import type { Element, Root as HtmlRoot, Text } from "hast";
 import { Root as MdastRoot, Code } from "mdast";
 // import { BuildCtx } from "@jackyzha0/quartz/quartz/util/ctx"
 // import { QuartzTransformerPlugin} from "@jackyzha0/quartz/quartz/plugins/types"
